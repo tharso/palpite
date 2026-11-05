@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17152b">
+  <title>Palpite — adivinhe a palavra</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <button class="icone" id="btn-ajuda" aria-label="Como jogar">?</button>
+    <h1 class="marca" aria-label="Palpite">
+      <span>P</span><span>A</span><span>L</span><span>P</span><span>I</span><span>T</span><span>E</span>
+    </h1>
+    <button class="icone" id="btn-stats" aria-label="Estatísticas">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 20V10h3v10H4zm6.5 0V4h3v16h-3zM17 20v-7h3v7h-3z"/></svg>
+    </button>
+  </header>
+
+  <nav class="modos" role="tablist">
+    <button role="tab" data-modo="diario" class="modo">Desafio do dia</button>
+    <button role="tab" data-modo="livre" class="modo">Modo livre</button>
+  </nav>
+
+  <main>
+    <p class="subtitulo" id="subtitulo"></p>
+    <div id="grade" class="grade" aria-live="polite"></div>
+    <div id="aviso" class="aviso" role="status"></div>
+  </main>
+
+  <div id="teclado" class="teclado"></div>
+
+  <dialog id="dlg-ajuda" class="janela">
+    <button class="fechar" data-fechar aria-label="Fechar">×</button>
+    <h2>Como jogar</h2>
+    <p>Descubra a palavra secreta de <b>5 letras</b> em até <b>6 tentativas</b>.</p>
+    <p>Cada palpite precisa ser uma palavra que existe. Depois de enviar, as letras mudam de cor:</p>
+    <div class="exemplo"><span class="ladrilho certa">C</span><span class="ladrilho">A</span><span class="ladrilho">R</span><span class="ladrilho">T</span><span class="ladrilho">A</span></div>
+    <p><b>Verde:</b> a letra está na palavra e na posição certa.</p>
+    <div class="exemplo"><span class="ladrilho">M</span><span class="ladrilho">O</span><span class="ladrilho lugar">L</span><span class="ladrilho">H</span><span class="ladrilho">O</span></div>
+    <p><b>Amarela:</b> a letra está na palavra, mas em outra posição.</p>
+    <div class="exemplo"><span class="ladrilho">P</span><span class="ladrilho">R</span><span class="ladrilho">A</span><span class="ladrilho errada">I</span><span class="ladrilho">A</span></div>
+    <p><b>Cinza:</b> a letra não está na palavra.</p>
+    <p>Acentos e cedilha entram sozinhos. Digite <b>acao</b> e o jogo entende <b>ação</b>.</p>
+    <p>A palavra pode ter letras repetidas.</p>
+    <p>Toque num quadrado da linha para escolher onde a próxima letra entra.</p>
+    <p><b>Desafio do dia:</b> uma palavra nova por dia, igual para todo mundo.<br><b>Modo livre:</b> jogue quantas vezes quiser.</p>
+  </dialog>
+
+  <dialog id="dlg-fim" class="janela">
+    <button class="fechar" data-fechar aria-label="Fechar">×</button>
+    <h2 id="fim-titulo"></h2>
+    <p class="fim-palavra" id="fim-palavra"></p>
+    <h3>Estatísticas — <span id="fim-modo"></span></h3>
+    <div class="numeros" id="fim-numeros"></div>
+    <h3>Tentativas usadas</h3>
+    <div class="distribuicao" id="fim-dist"></div>
+    <div class="acoes">
+      <button class="botao secundario" id="btn-compartilhar">Copiar resultado</button>
+      <button class="botao" id="btn-proxima"></button>
+    </div>
+    <p class="contagem" id="fim-contagem"></p>
+  </dialog>
+
+  <script src="palavras.js"></script>
+  <script src="game.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
