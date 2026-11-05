@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#17152b">
   <title>Palpite — adivinhe a palavra</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -33,6 +33,12 @@
     <button role="tab" data-modo="diario" class="modo">Desafio do dia</button>
     <button role="tab" data-modo="livre" class="modo">Modo livre</button>
   </nav>
+  <div class="tamanhos" role="radiogroup" aria-label="Letras por palavra">
+    <button role="radio" class="tamanho" data-tamanho="4"><b>4</b>letras</button>
+    <button role="radio" class="tamanho" data-tamanho="5"><b>5</b>letras</button>
+    <button role="radio" class="tamanho" data-tamanho="6"><b>6</b>letras</button>
+    <button role="radio" class="tamanho" data-tamanho="7"><b>7</b>letras</button>
+  </div>
 
   <main>
     <p class="subtitulo" id="subtitulo"></p>
@@ -46,7 +52,7 @@
    <div class="janela" role="dialog" aria-modal="true" aria-labelledby="ajuda-titulo">
     <button class="fechar" data-fechar aria-label="Fechar">×</button>
     <h2 id="ajuda-titulo">Como jogar</h2>
-    <p>Descubra a palavra secreta de <b>5 letras</b> em até <b>6 tentativas</b>.</p>
+    <p>Descubra a palavra secreta em até <b>6 tentativas</b>. Escolha palavras de <b>4, 5, 6 ou 7 letras</b> nos botões do topo.</p>
     <p>Cada palpite precisa ser uma palavra que existe. Depois de enviar, as letras mudam de cor:</p>
     <div class="exemplo"><span class="ladrilho certa">C</span><span class="ladrilho">A</span><span class="ladrilho">R</span><span class="ladrilho">T</span><span class="ladrilho">A</span></div>
     <p><b>Verde:</b> a letra está na palavra e na posição certa.</p>
@@ -57,7 +63,8 @@
     <p>Acentos e cedilha entram sozinhos. Digite <b>acao</b> e o jogo entende <b>ação</b>.</p>
     <p>A palavra pode ter letras repetidas.</p>
     <p>Toque num quadrado da linha para escolher onde a próxima letra entra.</p>
-    <p><b>Desafio do dia:</b> uma palavra nova por dia, igual para todo mundo.<br><b>Modo livre:</b> jogue quantas vezes quiser.</p>
+    <p><b>Desafio do dia:</b> uma palavra nova por dia em cada tamanho, igual para todo mundo.<br><b>Modo livre:</b> jogue quantas vezes quiser.</p>
+    <p class="rodape"><a href="/privacidade">Privacidade e suporte</a></p>
    </div>
   </div>
 
@@ -78,8 +85,8 @@
    </div>
   </div>
 
-  <script src="palavras.js?v=3"></script>
-  <script src="game.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="palavras.js?v=5"></script>
+  <script src="game.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

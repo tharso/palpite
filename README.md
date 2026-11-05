@@ -1,12 +1,12 @@
 # Palpite
 
-Jogo de adivinhar uma palavra de 5 letras em português, em até 6 tentativas.
+Jogo de adivinhar uma palavra em português, em até 6 tentativas. A palavra pode ter 4, 5, 6 ou 7 letras: o jogador escolhe.
 
 - **Verde:** a letra está na palavra e na posição certa.
 - **Amarela:** a letra está na palavra, mas em outra posição.
 - **Cinza:** a letra não está na palavra.
 
-Tem dois modos. O **desafio do dia** dá uma palavra por dia, igual para todo mundo. O **modo livre** sorteia uma palavra nova a cada partida.
+Tem dois modos. O **desafio do dia** dá uma palavra por dia em cada tamanho, igual para todo mundo. O **modo livre** sorteia uma palavra nova a cada partida.
 
 ## Rodar no computador
 
@@ -37,15 +37,17 @@ node --test tests/
 
 ## Lista de palavras
 
-O `palavras.js` tem duas listas:
+O `palavras.js` tem, para cada tamanho, duas listas:
 
-- `VALIDAS`: cerca de 5.350 palavras de 5 letras que o jogo aceita como palpite.
-- `RESPOSTAS`: cerca de 1.200 palavras comuns que podem virar a palavra secreta.
+- `validas`: palavras que o jogo aceita como palpite (1.548 de 4 letras, 5.350 de 5, 11.246 de 6, 20.386 de 7).
+- `respostas`: palavras comuns que podem virar a palavra secreta (de 569 a 1.432 por tamanho).
+
+A lista de respostas de 5 letras não pode mudar: ela define o desafio do dia de quem já joga. Os testes conferem isso.
 
 Para gerar de novo, baixe as duas fontes e rode:
 
 ```bash
-python3 tools/build_words.py br-utf8.txt pt_br_50k.txt palavras.js
+python3 tools/build_words.py br-utf8.txt pt_br_50k.txt palavras.js ios/Palpite/palavras.json
 ```
 
 Fontes:
@@ -53,7 +55,30 @@ Fontes:
 - Dicionário `br-utf8.txt`, do IME-USP: https://www.ime.usp.br/~pf/dicios/
 - Lista de frequência `pt_br_50k.txt`, do projeto FrequencyWords, de Hermit Dave (CC-BY-SA 4.0): https://github.com/hermitdave/FrequencyWords
 
+## App para iPhone (pasta `ios/`)
+
+App nativo em SwiftUI, com as mesmas regras e a mesma palavra do dia do site.
+
+| Pasta | O que tem |
+|---|---|
+| `ios/PalpiteCore/` | Regras do jogo em Swift (pacote) e testes |
+| `ios/Palpite/` | Telas do app, ícone e `palavras.json` |
+| `ios/Palpite.xcodeproj` | Projeto do Xcode |
+
+Abrir no Xcode: `open ios/Palpite.xcodeproj`.
+
+Testar as regras sem o Xcode:
+
+```bash
+cd ios/PalpiteCore && swift test
+```
+
+O `ios/Palpite/palavras.json` sai do mesmo comando que gera o `palavras.js`.
+
+O ícone é gerado por `python3 tools/gerar_icone.py ios/Palpite/Assets.xcassets/AppIcon.appiconset/icone.png`.
+
+A página de privacidade e suporte, que a App Store exige, fica em `privacidade.html` (palpite.tharso.com/privacidade).
+
 ## Próximos passos
 
-- Versão 2: app para iOS.
-- Modos com 4, 6 e 7 letras.
+- Publicar o app na App Store.

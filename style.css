@@ -8,7 +8,8 @@
   --lugar: #e3a92b;
   --errada: #67637f;
   --tecla: #4a4670;
-  --ladrilho: min(15vw, 62px, 8.2vh);
+  --colunas: 5;
+  --ladrilho: min(calc((100vw - 16px - (var(--colunas) - 1) * 6px) / var(--colunas)), 62px, 7.6vh);
   --vao: 6px;
 }
 
@@ -80,6 +81,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .modo + .modo { margin-left: 4px; }
 .modo.ativo { background: var(--tecla); color: var(--texto); }
 
+.tamanhos { display: flex; margin: 8px 0 0; }
+.tamanho {
+  border: 1px solid var(--borda); background: var(--painel);
+  border-radius: 10px;
+  width: 52px; padding: 3px 0 4px;
+  font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--suave); line-height: 1.1;
+}
+.tamanho b { display: block; font-size: 16px; color: var(--texto); }
+.tamanho + .tamanho { margin-left: 6px; }
+.tamanho.ativo { background: var(--tecla); border-color: #8f88d6; }
+
 main {
   flex: 1;
   display: flex; flex-direction: column;
@@ -90,7 +103,7 @@ main {
 .subtitulo { margin: 4px 0 10px; color: var(--suave); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
 
 .grade { display: grid; grid-gap: var(--vao); gap: var(--vao); }
-.linha { display: grid; grid-template-columns: repeat(5, var(--ladrilho)); grid-gap: var(--vao); gap: var(--vao); }
+.linha { display: grid; grid-template-columns: repeat(var(--colunas), var(--ladrilho)); grid-gap: var(--vao); gap: var(--vao); }
 .linha.tremer { animation: tremer .4s; }
 .ladrilho {
   width: var(--ladrilho); height: var(--ladrilho);
@@ -198,6 +211,8 @@ main {
 }
 .botao.secundario { background: var(--tecla); }
 .botao[hidden] { display: none; }
+.rodape { margin-top: 16px; font-size: 13px; }
+.rodape a { color: var(--suave); }
 .contagem { text-align: center; color: var(--suave); font-size: 13px; }
 
 @keyframes virar {

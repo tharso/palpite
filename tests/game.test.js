@@ -2,7 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const J = require('../game.js');
-const { RESPOSTAS, VALIDAS } = require('../palavras.js');
+const { PALAVRAS } = require('../palavras.js');
+const { respostas: RESPOSTAS, validas: VALIDAS } = PALAVRAS[5];
 
 const cores = (p, r) => J.avaliar(p, r).map((c) => ({ certa: 'V', lugar: 'A', errada: '-' }[c])).join('');
 
@@ -62,4 +63,26 @@ test('listas de palavras', () => {
 test('texto para compartilhar', () => {
   const t = J.textoCompartilhar('Palpite #1', [J.avaliar('TERMO', 'TEMOS'), J.avaliar('TEMOS', 'TEMOS')], true);
   assert.strictEqual(t, 'Palpite #1 2/6\n\n🟩🟩⬛🟨🟨\n🟩🟩🟩🟩🟩');
+});
+
+test('desafio de 5 letras não mudou com os novos tamanhos', () => {
+  // Palavras que o site já sorteava antes dos tamanhos 4, 6 e 7.
+  assert.deepStrictEqual([1, 2, 309, 310, 1000].map((n) => J.palavraDoDia(RESPOSTAS, n)), ['surra', 'cuida', 'fugiu', 'chego', 'pudim']);
+  assert.strictEqual(J.palavraDoDia(RESPOSTAS, 309, 5), 'fugiu');
+});
+
+test('listas de 4, 6 e 7 letras', () => {
+  for (const n of [4, 6, 7]) {
+    const { respostas, validas } = PALAVRAS[n];
+    assert.ok(respostas.length > 400, `${n}: ${respostas.length}`);
+    for (const w of respostas) {
+      const k = J.normalizar(w);
+      assert.strictEqual(k.length, n, w);
+      assert.strictEqual(validas[k], w, w);
+    }
+    const dia = J.palavraDoDia(respostas, 309, n);
+    assert.strictEqual(J.normalizar(dia).length, n);
+  }
+  // Cores funcionam em qualquer tamanho. CABANA: o B existe (amarelo), o 1º N sobra (cinza).
+  assert.deepStrictEqual(J.avaliar('BANANA', 'CABANA'), ['lugar', 'certa', 'errada', 'certa', 'certa', 'certa']);
 });

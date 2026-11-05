@@ -1,12 +1,12 @@
 // Regras do jogo, sem nada de tela. Roda no navegador e no Node (para os testes).
 (function (root) {
-  const TAMANHO = 5;
+  const TAMANHOS = [4, 5, 6, 7]; // letras por palavra que o jogador pode escolher
   const TENTATIVAS = 6;
   const INICIO = Date.UTC(2026, 0, 1); // dia 1 do desafio diário
 
   // Tira acentos e cedilha e põe em maiúsculas: "Ação" -> "ACAO".
   function normalizar(palavra) {
-    return palavra.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+    return palavra.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   }
 
   // Compara palpite e resposta (já normalizados). Devolve, por letra:
@@ -69,8 +69,10 @@
     return a;
   }
 
-  function palavraDoDia(respostas, numero) {
-    const ordem = embaralhar(respostas, 20260101);
+  // Cada tamanho tem a própria ordem. A semente de 5 letras é a original:
+  // mudar ela mudaria o desafio do dia de quem já joga.
+  function palavraDoDia(respostas, numero, tamanho = 5) {
+    const ordem = embaralhar(respostas, 20260101 + (tamanho - 5) * 7919);
     const i = (((numero - 1) % ordem.length) + ordem.length) % ordem.length;
     return ordem[i];
   }
@@ -83,7 +85,7 @@
     return `${titulo} ${placar}\n\n${linhas.join('\n')}`;
   }
 
-  const api = { TAMANHO, TENTATIVAS, normalizar, avaliar, estadoTeclado, numeroDoDia, palavraDoDia, embaralhar, textoCompartilhar };
+  const api = { TAMANHOS, TENTATIVAS, normalizar, avaliar, estadoTeclado, numeroDoDia, palavraDoDia, embaralhar, textoCompartilhar };
   if (typeof module !== 'undefined') module.exports = api;
   else root.Jogo = api;
 })(typeof window !== 'undefined' ? window : globalThis);

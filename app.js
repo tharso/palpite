@@ -1,13 +1,15 @@
 // Tela do jogo: grade, teclado, janelas e dados salvos no navegador.
 (function () {
-  const { TAMANHO, TENTATIVAS, normalizar, avaliar, estadoTeclado, numeroDoDia, palavraDoDia, textoCompartilhar } = window.Jogo;
+  const { TAMANHOS, TENTATIVAS, normalizar, avaliar, estadoTeclado, numeroDoDia, palavraDoDia, textoCompartilhar } = window.Jogo;
   const $ = (id) => document.getElementById(id);
   const TEMPO_VIRAR = 280; // ms entre uma letra e a próxima na hora de revelar
   const FILEIRAS = ['QWERTYUIOP', 'ASDFGHJKL', '<ZXCVBNM>'];
 
   let modo = localStorage.getItem('palpite:modo') || 'diario';
+  let tamanho = Number(localStorage.getItem('palpite:tamanho'));
+  if (TAMANHOS.indexOf(tamanho) === -1) tamanho = 5;
   let jogo; // { resposta, numero?, palpites: [], fim: bool, venceu: bool }
-  let letras = Array(TAMANHO).fill('');
+  let letras = Array(tamanho).fill('');
   let cursor = 0;
   let ocupado = false; // true enquanto a animação roda
 
@@ -21,25 +23,32 @@
   const gravar = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const statsVazias = () => ({ jogos: 0, vitorias: 0, sequencia: 0, melhor: 0, dist: Array(TENTATIVAS).fill(0) });
 
+  // Palavras do tamanho escolhido: { respostas: [...], validas: { SEMACENTO: 'com acento' } }
+  const lista = () => PALAVRAS[tamanho];
+  // Chaves salvas. As de 5 letras ficam com o nome antigo, para não perder o que já foi jogado.
+  const sufixo = () => (tamanho === 5 ? '' : ':' + tamanho);
+  const chaveJogo = () => 'palpite:' + modo + sufixo();
+  const chaveStats = () => 'palpite:stats:' + modo + sufixo();
+
   function carregarJogo() {
     if (modo === 'diario') {
       const numero = numeroDoDia(new Date());
-      const salvo = ler('palpite:diario', null);
+      const salvo = ler(chaveJogo(), null);
       if (salvo && salvo.numero === numero) return salvo;
-      return { numero, resposta: palavraDoDia(RESPOSTAS, numero), palpites: [], fim: false, venceu: false };
+      return { numero, resposta: palavraDoDia(lista().respostas, numero, tamanho), palpites: [], fim: false, venceu: false };
     }
-    const salvo = ler('palpite:livre', null);
+    const salvo = ler(chaveJogo(), null);
     if (salvo && !salvo.fim) return salvo;
     return novoLivre();
   }
   function novoLivre() {
-    const resposta = RESPOSTAS[Math.floor(Math.random() * RESPOSTAS.length)];
-    return { resposta, palpites: [], fim: false, venceu: false };
+    const r = lista().respostas;
+    return { resposta: r[Math.floor(Math.random() * r.length)], palpites: [], fim: false, venceu: false };
   }
-  const salvarJogo = () => gravar('palpite:' + modo, jogo);
+  const salvarJogo = () => gravar(chaveJogo(), jogo);
 
   function registrarFim() {
-    const k = 'palpite:stats:' + modo;
+    const k = chaveStats();
     const s = ler(k, statsVazias());
     s.jogos++;
     if (jogo.venceu) {
@@ -57,7 +66,7 @@
   const chave = () => normalizar(jogo.resposta);
   const avaliacoes = () => jogo.palpites.map((p) => avaliar(p, chave()));
   // Mostra a palavra com acento, se existir: "NIVEL" -> "NÍVEL".
-  const comAcento = (k) => (VALIDAS[k] || k).toUpperCase();
+  const comAcento = (k) => (lista().validas[k] || k).toUpperCase();
 
   function montarGrade() {
     const grade = $('grade');
@@ -66,7 +75,7 @@
     for (let i = 0; i < TENTATIVAS; i++) {
       const linha = document.createElement('div');
       linha.className = 'linha';
-      for (let j = 0; j < TAMANHO; j++) {
+      for (let j = 0; j < tamanho; j++) {
         const t = document.createElement('div');
         t.className = 'ladrilho';
         t.dataset.col = j;
@@ -145,7 +154,12 @@
       b.classList.toggle('ativo', ativo);
       b.setAttribute('aria-selected', ativo);
     });
-    $('subtitulo').textContent = modo === 'diario' ? `Desafio nº ${jogo.numero}` : 'Jogue quantas vezes quiser';
+    document.querySelectorAll('.tamanho').forEach((b) => {
+      const ativo = Number(b.dataset.tamanho) === tamanho;
+      b.classList.toggle('ativo', ativo);
+      b.setAttribute('aria-checked', ativo);
+    });
+    $('subtitulo').textContent = modo === 'diario' ? `Desafio nº ${jogo.numero} · ${tamanho} letras` : `Modo livre · ${tamanho} letras`;
   }
 
   let timerAviso;
@@ -173,7 +187,7 @@
     t.classList.add('cheio');
     // pula para o próximo quadrado vazio à direita; se não houver, avança um
     let prox = letras.findIndex((x, i) => i > cursor && !x);
-    cursor = prox === -1 ? Math.min(cursor + 1, TAMANHO - 1) : prox;
+    cursor = prox === -1 ? Math.min(cursor + 1, tamanho - 1) : prox;
     desenharAtual();
   }
 
@@ -187,7 +201,7 @@
 
   function mover(d) {
     if (jogo.fim || ocupado) return;
-    cursor = Math.max(0, Math.min(TAMANHO - 1, cursor + d));
+    cursor = Math.max(0, Math.min(tamanho - 1, cursor + d));
     desenharAtual();
   }
 
@@ -201,9 +215,9 @@
 
   function enviar() {
     if (jogo.fim || ocupado) return;
-    if (letras.some((x) => !x)) return tremer('Só palavras com 5 letras');
+    if (letras.some((x) => !x)) return tremer(`Só palavras com ${tamanho} letras`);
     const palpite = letras.join('');
-    if (!VALIDAS[palpite]) return tremer('Essa palavra não está no dicionário');
+    if (!lista().validas[palpite]) return tremer('Essa palavra não está no dicionário');
 
     ocupado = true;
     const linha = linhaAtual();
@@ -232,7 +246,7 @@
 
     setTimeout(() => {
       ocupado = false;
-      letras = Array(TAMANHO).fill('');
+      letras = Array(tamanho).fill('');
       cursor = 0;
       pintarTeclado();
       if (jogo.fim) {
@@ -251,7 +265,7 @@
         prox.classList.add('atual');
         desenharAtual();
       }
-    }, TAMANHO * TEMPO_VIRAR + 300);
+    }, tamanho * TEMPO_VIRAR + 300);
   }
 
   // ---------- janelas ----------
@@ -260,10 +274,10 @@
     $('fim-palavra').innerHTML = 'A palavra era <b></b>';
     $('fim-palavra').querySelector('b').textContent = jogo.resposta;
     $('fim-palavra').hidden = !jogo.fim;
-    $('fim-modo').textContent = modo === 'diario' ? 'desafio do dia' : 'modo livre';
+    $('fim-modo').textContent = (modo === 'diario' ? 'desafio do dia' : 'modo livre') + `, ${tamanho} letras`;
     if (!jogo.fim) $('fim-titulo').textContent = 'Estatísticas';
 
-    const s = ler('palpite:stats:' + modo, statsVazias());
+    const s = ler(chaveStats(), statsVazias());
     const pct = s.jogos ? Math.round((100 * s.vitorias) / s.jogos) : 0;
     $('fim-numeros').innerHTML = [
       [s.jogos, 'jogos'], [pct + '%', 'vitórias'], [s.sequencia, 'sequência'], [s.melhor, 'melhor seq.'],
@@ -337,7 +351,7 @@
   }
 
   async function compartilhar() {
-    const titulo = modo === 'diario' ? `Palpite #${jogo.numero}` : 'Palpite (modo livre)';
+    const titulo = modo === 'diario' ? `Palpite #${jogo.numero} · ${tamanho} letras` : `Palpite (modo livre, ${tamanho} letras)`;
     const texto = textoCompartilhar(titulo, avaliacoes(), jogo.venceu);
     if (await copiarTexto(texto)) avisar('Resultado copiado');
     else avisar('Não deu para copiar');
@@ -350,10 +364,19 @@
     iniciar();
   }
 
+  function trocarTamanho(n) {
+    if (ocupado || n === tamanho) return;
+    tamanho = n;
+    localStorage.setItem('palpite:tamanho', String(n));
+    fecharJanelas();
+    iniciar();
+  }
+
   function iniciar() {
+    document.documentElement.style.setProperty('--colunas', tamanho);
     jogo = carregarJogo();
     salvarJogo();
-    letras = Array(TAMANHO).fill('');
+    letras = Array(tamanho).fill('');
     cursor = 0;
     desenharModo();
     montarGrade();
@@ -398,6 +421,7 @@
   });
 
   document.querySelectorAll('.modo').forEach((b) => b.addEventListener('click', () => trocarModo(b.dataset.modo)));
+  document.querySelectorAll('.tamanho').forEach((b) => b.addEventListener('click', () => trocarTamanho(Number(b.dataset.tamanho))));
   $('btn-ajuda').addEventListener('click', () => abrirJanela('dlg-ajuda'));
   $('btn-stats').addEventListener('click', abrirFim);
   $('btn-compartilhar').addEventListener('click', compartilhar);
@@ -405,7 +429,7 @@
     fecharJanelas();
     if (modo === 'livre') {
       jogo = novoLivre();
-      gravar('palpite:livre', jogo);
+      gravar(chaveJogo(), jogo);
       iniciar();
     } else {
       trocarModo('livre');
