@@ -13,7 +13,10 @@
 
   // ---------- dados salvos ----------
   const ler = (k, padrao) => {
-    try { return JSON.parse(localStorage.getItem(k)) ?? padrao; } catch { return padrao; }
+    try {
+      const v = JSON.parse(localStorage.getItem(k));
+      return v === null || v === undefined ? padrao : v;
+    } catch (e) { return padrao; }
   };
   const gravar = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const statsVazias = () => ({ jogos: 0, vitorias: 0, sequencia: 0, melhor: 0, dist: Array(TENTATIVAS).fill(0) });
@@ -282,7 +285,7 @@
       prox.textContent = 'Ir para o modo livre';
     }
     atualizarContagem();
-    $('dlg-fim').showModal();
+    abrirJanela('dlg-fim');
   }
 
   let timerContagem;
@@ -301,15 +304,43 @@
     timerContagem = setInterval(tic, 1000);
   }
 
+  // Janelas simples (div), em vez de <dialog>, para funcionar em Safari antigo.
+  function abrirJanela(id) {
+    fecharJanelas();
+    const m = $(id);
+    m.hidden = false;
+    const fechar = m.querySelector('[data-fechar]');
+    if (fechar) fechar.focus();
+  }
+  function fecharJanelas() {
+    document.querySelectorAll('.modal').forEach((m) => (m.hidden = true));
+  }
+  const janelaAberta = () => !!document.querySelector('.modal:not([hidden])');
+
+  // Copia texto. Usa o jeito novo se existir; senão, o jeito antigo.
+  async function copiarTexto(texto) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { await navigator.clipboard.writeText(texto); return true; } catch (e) { /* tenta o jeito antigo */ }
+    }
+    const area = document.createElement('textarea');
+    area.value = texto;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    area.setSelectionRange(0, texto.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(area);
+    return ok;
+  }
+
   async function compartilhar() {
     const titulo = modo === 'diario' ? `Palpite #${jogo.numero}` : 'Palpite (modo livre)';
     const texto = textoCompartilhar(titulo, avaliacoes(), jogo.venceu);
-    try {
-      await navigator.clipboard.writeText(texto);
-      avisar('Resultado copiado');
-    } catch {
-      avisar('Não deu para copiar');
-    }
+    if (await copiarTexto(texto)) avisar('Resultado copiado');
+    else avisar('Não deu para copiar');
   }
 
   function trocarModo(m) {
@@ -344,7 +375,10 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (document.querySelector('dialog[open]')) return;
+    if (janelaAberta()) {
+      if (e.key === 'Escape') fecharJanelas();
+      return;
+    }
     if (e.key.length === 1 || ['Enter', 'Backspace', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       e.preventDefault();
       tecla(e.key);
@@ -364,11 +398,11 @@
   });
 
   document.querySelectorAll('.modo').forEach((b) => b.addEventListener('click', () => trocarModo(b.dataset.modo)));
-  $('btn-ajuda').addEventListener('click', () => $('dlg-ajuda').showModal());
+  $('btn-ajuda').addEventListener('click', () => abrirJanela('dlg-ajuda'));
   $('btn-stats').addEventListener('click', abrirFim);
   $('btn-compartilhar').addEventListener('click', compartilhar);
   $('btn-proxima').addEventListener('click', () => {
-    $('dlg-fim').close();
+    fecharJanelas();
     if (modo === 'livre') {
       jogo = novoLivre();
       gravar('palpite:livre', jogo);
@@ -377,15 +411,15 @@
       trocarModo('livre');
     }
   });
-  document.querySelectorAll('dialog').forEach((d) => {
-    d.addEventListener('click', (e) => {
-      if (e.target === d || e.target.closest('[data-fechar]')) d.close();
+  document.querySelectorAll('.modal').forEach((m) => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m || e.target.closest('[data-fechar]')) fecharJanelas();
     });
   });
 
   iniciar();
   if (!localStorage.getItem('palpite:viu-ajuda')) {
     localStorage.setItem('palpite:viu-ajuda', '1');
-    $('dlg-ajuda').showModal();
+    abrirJanela('dlg-ajuda');
   }
 })();
