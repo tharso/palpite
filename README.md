@@ -39,21 +39,24 @@ node --test tests/
 
 O `palavras.js` tem, para cada tamanho, duas listas:
 
-- `validas`: palavras que o jogo aceita como palpite (1.548 de 4 letras, 5.350 de 5, 11.246 de 6, 20.386 de 7).
+- `validas`: palavras que o jogo aceita como palpite (3.680 de 4 letras, 11.879 de 5, 25.505 de 6, 42.852 de 7).
 - `respostas`: palavras comuns que podem virar a palavra secreta (de 569 a 1.432 por tamanho).
 
 A lista de respostas de 5 letras não pode mudar: ela define o desafio do dia de quem já joga. Os testes conferem isso.
 
-Para gerar de novo, baixe as duas fontes e rode:
+As palavras aceitas vêm de dois dicionários. O do IME-USP tem buracos (não tem "lápide", por exemplo), e o VERO cobre. As palavras do VERO só viram palpite aceito, nunca palavra secreta.
+
+Para gerar de novo, baixe as três fontes e rode:
 
 ```bash
-python3 tools/build_words.py br-utf8.txt pt_br_50k.txt palavras.js ios/Palpite/palavras.json
+python3 tools/build_words.py br-utf8.txt pt_br_50k.txt palavras.js ios/Palpite/palavras.json palavras.txt
 ```
 
 Fontes:
 
 - Dicionário `br-utf8.txt`, do IME-USP: https://www.ime.usp.br/~pf/dicios/
 - Lista de frequência `pt_br_50k.txt`, do projeto FrequencyWords, de Hermit Dave (CC-BY-SA 4.0): https://github.com/hermitdave/FrequencyWords
+- Dicionário `palavras.txt`, do VERO (LibreOffice), no projeto pythonprobr/palavras (MPL-2.0): https://github.com/pythonprobr/palavras
 
 ## App para iPhone (pasta `ios/`)
 

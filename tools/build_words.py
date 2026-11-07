@@ -1,16 +1,22 @@
 """Gera as listas de palavras de 4 a 7 letras do jogo.
 
-Uso: python3 tools/build_words.py br-utf8.txt pt_br_50k.txt palavras.js ios/Palpite/palavras.json
+Uso: python3 tools/build_words.py br-utf8.txt pt_br_50k.txt palavras.js ios/Palpite/palavras.json palavras.txt
 
 - VALIDAS: palavras aceitas como palpite (chave sem acento -> forma com acento).
 - RESPOSTAS: palavras comuns que podem ser sorteadas.
+
+O br-utf8 tem buracos ("lápide", "funeral", "doces"). Por isso VALIDAS também recebe:
+- as palavras do palavras.txt (dicionário VERO, via pythonprobr/palavras, MPL-2.0);
+- os plurais da lista de frequência cujo singular está em algum dos dois dicionários ("lápides").
+Essas palavras extras só entram em VALIDAS, nunca em RESPOSTAS, e nunca trocam a forma
+de uma chave que o br-utf8 já tinha. Assim o desafio do dia não muda.
 
 ATENÇÃO: mudar a lista de RESPOSTAS de um tamanho muda o desafio do dia daquele tamanho.
 A lista de 5 letras precisa continuar idêntica (o jogo começou com ela).
 """
 import json, sys, unicodedata
 
-dic_path, freq_path, out_js, out_json = sys.argv[1:5]
+dic_path, freq_path, out_js, out_json, extra_path = sys.argv[1:6]
 TAMANHOS = (4, 5, 6, 7)
 CORTE = 12000  # só palavras entre as 12 mil mais usadas viram resposta
 ALLOWED = set("abcdefghijklmnopqrstuvwxyzáàâãéêíóôõúüç")
@@ -28,14 +34,20 @@ def norm(w):
     return ''.join(c for c in unicodedata.normalize('NFD', w) if unicodedata.category(c) != 'Mn')
 
 
-dic = set()
-for line in open(dic_path, encoding='utf-8'):
-    w = line.strip()
-    if not w or w[0].isupper():
-        continue
-    w = unicodedata.normalize('NFC', w)
-    if set(w) <= ALLOWED:
-        dic.add(w)
+def ler_dicionario(path):
+    palavras = set()
+    for line in open(path, encoding='utf-8'):
+        w = line.strip()
+        if not w or w[0].isupper():
+            continue
+        w = unicodedata.normalize('NFC', w)
+        if set(w) <= ALLOWED:
+            palavras.add(w)
+    return palavras
+
+
+dic = ler_dicionario(dic_path)
+extra = ler_dicionario(extra_path)
 
 dic_sem_acento = {norm(w) for w in dic}
 
@@ -51,17 +63,27 @@ def plural_irregular(w):
     return any(w.endswith(fim) and norm(w[:-len(fim)] + troca) in dic_sem_acento for fim, troca in trocas)
 
 
-saida = {}
-for n in TAMANHOS:
-    validas = {}
-    for w in dic:
+# Plurais da lista de frequência cujo singular está num dos dicionários.
+todos = dic | extra
+plurais = {w for w in rank if set(w) <= ALLOWED and w.endswith('s') and (w[:-1] in todos or w[:-2] in todos)}
+
+
+def escolher(palavras, n):
+    """Chave sem acento -> forma. Escolhe a mais usada; no empate, a com menos acentos; depois, ordem alfabética."""
+    chave = lambda x: (rank.get(x, 10**9), sum(c not in 'abcdefghijklmnopqrstuvwxyz' for c in x), x)
+    formas = {}
+    for w in palavras:
         if len(norm(w)) != n:
             continue
         k = norm(w).upper()
-        # Forma escolhida: a mais usada; no empate, a com menos acentos; depois, ordem alfabética.
-        chave = lambda x: (rank.get(x, 10**9), sum(c not in 'abcdefghijklmnopqrstuvwxyz' for c in x), x)
-        if k not in validas or chave(w) < chave(validas[k]):
-            validas[k] = w
+        if k not in formas or chave(w) < chave(formas[k]):
+            formas[k] = w
+    return formas
+
+
+saida = {}
+for n in TAMANHOS:
+    validas = escolher(dic, n)
     bloqueio = {norm(b) for b in BLOQUEIO[n].split()}
     respostas = []
     for k, w in validas.items():
@@ -74,12 +96,15 @@ for n in TAMANHOS:
             continue  # a lista de 5 letras fica como nasceu, para não mudar o desafio do dia
         respostas.append((r, w))
     respostas.sort()
+    # Extras só depois das respostas: entram como palpite, nunca como palavra secreta.
+    for k, w in escolher(extra | plurais, n).items():
+        validas.setdefault(k, w)
     saida[n] = {'respostas': [w for _, w in respostas], 'validas': dict(sorted(validas.items()))}
     print(f'{n} letras: {len(validas)} válidas, {len(respostas)} respostas', file=sys.stderr)
 
 with open(out_js, 'w', encoding='utf-8') as f:
     f.write('// Gerado por tools/build_words.py. Não editar à mão.\n')
-    f.write('// Fontes: dicionário br-utf8 (IME-USP) e FrequencyWords pt_br (Hermit Dave, CC-BY-SA 4.0).\n')
+    f.write('// Fontes: dicionários br-utf8 (IME-USP) e VERO (pythonprobr/palavras, MPL-2.0) e FrequencyWords pt_br (Hermit Dave, CC-BY-SA 4.0).\n')
     f.write('// PALAVRAS[tamanho] = { respostas: [...palavras que podem ser sorteadas], validas: { SEMACENTO: "com acento" } }\n')
     f.write('const PALAVRAS = ' + json.dumps({str(n): v for n, v in saida.items()}, ensure_ascii=False, separators=(',', ':')) + ';\n')
     f.write("if (typeof module !== 'undefined') module.exports = { PALAVRAS };\n")

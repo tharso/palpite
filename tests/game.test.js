@@ -86,3 +86,12 @@ test('listas de 4, 6 e 7 letras', () => {
   // Cores funcionam em qualquer tamanho. CABANA: o B existe (amarelo), o 1º N sobra (cinza).
   assert.deepStrictEqual(J.avaliar('BANANA', 'CABANA'), ['lugar', 'certa', 'errada', 'certa', 'certa', 'certa']);
 });
+
+test('aceita palavras que faltavam no dicionário do IME-USP', () => {
+  // O br-utf8 não tem "lápide", "funeral" nem "doces". O segundo dicionário (VERO) cobre.
+  const aceita = (w) => PALAVRAS[J.normalizar(w).length].validas[J.normalizar(w)];
+  assert.strictEqual(aceita('lápide'), 'lápide');
+  assert.strictEqual(aceita('lápides'), 'lápides');
+  assert.ok(aceita('funeral'));
+  assert.ok(aceita('doces'));
+});
